@@ -107,7 +107,7 @@ VM::~VM() {
 
 void VM::run() {
   v8::Locker locker;
-  v8::HandleScope handle_scope; // the very top level handle scope
+  v8::HandleScope handle_scope;
   ticker(0);
 };
 
@@ -146,7 +146,7 @@ v8::Handle<v8::Value> VM::ticker(ERL_NIF_TERM ref0) {
 	DEBUG(server, enif_make_tuple2(env, enif_make_atom(env, "last_tick"), (unsigned long) ref == 0 ? enif_make_atom(env,"top") :
 	                                    enif_make_copy(env, ref)),	enif_make_copy(env, tick));
 	
-	if (enif_is_tuple(env, tick)) { // should be always true, just a sanity check
+	if (enif_is_tuple(env, tick)) {
 	  
 	  ERL_NIF_TERM *array;
 	  int arity;
@@ -155,13 +155,12 @@ v8::Handle<v8::Value> VM::ticker(ERL_NIF_TERM ref0) {
 	  enif_get_atom_length(env, array[0], &len, ERL_NIF_LATIN1);
 	  enif_get_atom(env,array[0],(char *)&name,len + 1, ERL_NIF_LATIN1);
 	  
-	  // lookup the matrix
 	  unsigned int i = 0;
 	  bool stop_flag = false;
 
 	  while (!stop_flag) {
 		if ((!tick_handlers[i].name) ||
-			(!strcmp(name,tick_handlers[i].name))) { // handler has been located
+			(!strcmp(name,tick_handlers[i].name))) {
           TickHandlerResolution resolution = (tick_handlers[i].handler(this, name, tick, tick_ref, ref, arity, array));
 
 		  switch (resolution.type) {
@@ -375,16 +374,13 @@ v8::Handle<v8::Value> WrapFun(const v8::Arguments &arguments) {
   v8::Locker locker;
   VM * vm = (VM *)__ERLV8__(v8::Context::GetCurrent()->Global());
 
-  // each call gets a unique ref
   ERL_NIF_TERM ref = enif_make_ref(vm->env);
-  // prepare arguments
   ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM) * arguments.Length());
   for (int i=0;i<arguments.Length();i++) {
 	arr[i] = js_to_term(vm->context,vm->env,arguments[i]);
   }
   ERL_NIF_TERM arglist = enif_make_list_from_array(vm->env,arr,arguments.Length());
   free(arr);
-  // send invocation request
   SEND(vm->server,
 	   enif_make_tuple3(env,
 						enif_make_copy(env,external_to_term(arguments.Data())),
@@ -422,14 +418,14 @@ static void ctx_resource_destroy(ErlNifEnv* env, void* obj) {
 int load(ErlNifEnv *env, void** priv_data, ERL_NIF_TERM load_info)
 {
 
-  zmq_context = zmq_init(0); // we are using inproc only, so no I/O threads
+  zmq_context = zmq_init(0);
 
   vm_resource = enif_open_resource_type(env, NULL, "erlv8_vm_resource", vm_resource_destroy, (ErlNifResourceFlags) (ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
   val_resource = enif_open_resource_type(env, NULL, "erlv8_val_resource", val_resource_destroy, (ErlNifResourceFlags) (ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
   ctx_resource = enif_open_resource_type(env, NULL, "erlv8_ctx_resource", ctx_resource_destroy, (ErlNifResourceFlags) (ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
   v8::V8::Initialize();
-  int preemption = 100; // default value
+  int preemption = 100;
   enif_get_int(env, load_info, &preemption);
   v8::Locker locker;
   v8::Locker::StartPreemption(preemption);
