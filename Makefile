@@ -1,8 +1,12 @@
 X64=$(shell file -L `which epmd` | grep x86_64 | wc -l | xargs echo)
 X64L=$(shell file -L `which epmd` | grep x86-64 | wc -l | xargs echo)
 OSX=$(shell uname | grep Darwin | wc -l | xargs echo)
+JOYENT=$(shell uname -a | grep joyent | wc -l | xargs echo)
+ifeq ($(JOYENT),1)
+X64J=$(shell isainfo -b | grep 64 | wc -l | xargs echo)
+CPUS=-j $(psrinfo | wc -l | xargs echo)
+endif
 LINUX=$(shell uname | grep Linux | wc -l | xargs echo)
-
 V8ENV=GYPFLAGS="-f make"
 ifeq ($(X64),1)
 V8FLAGS=arch=x64
@@ -13,6 +17,10 @@ endif
 ifeq ($(X64L),1)
 V8FLAGS=arch=x64
 V8ENV=CCFLAGS=-fPIC
+endif
+
+ifeq ($(X64J),1)
+V8ENV=CXX=/opt/local/bin/gcc AR=/opt/local/bin/gcc LINKER=/opt/local/bin/gcc CC=/opt/local/bin/gcc
 endif
 
 ifeq ($(LINUX),1)
@@ -33,7 +41,7 @@ deps/zeromq2/.git/HEAD:
 	@git submodule update
 
 deps/v8/libv8.a: deps/v8/.git/config 
-	cd deps/v8 && $(V8ENV) scons $(V8FLAGS)
+	cd deps/v8 && $(V8ENV) scons $(V8FLAGS) $(CPUS)
 
 deps/zeromq2/src/.libs/libzmq.a: deps/zeromq2/.git/HEAD
 	@cd deps/zeromq2 && ./autogen.sh && ./configure $(ZMQ_FLAGS) && make
