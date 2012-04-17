@@ -34,6 +34,9 @@ all: compile
 deps/v8/.git/config:
 	@git submodule init
 	@git submodule update
+ifeq ($(JOYENT),1)
+	cd deps/v8 && patch -p1 < ../../v8_solaris.diff
+endif
 
 deps/zeromq2/.git/HEAD:
 	@git submodule init
