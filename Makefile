@@ -1,5 +1,5 @@
-X64=$(shell file -L `which epmd` | grep x86_64 | wc -l | xargs echo)
-X64L=$(shell file -L `which epmd` | grep x86-64 | wc -l | xargs echo)
+X64=$(shell file `which epmd` | grep x86_64 | wc -l | xargs echo)
+X64L=$(shell file `which epmd` | grep x86-64 | wc -l | xargs echo)
 OSX=$(shell uname | grep Darwin | wc -l | xargs echo)
 JOYENT=$(shell uname -a | grep joyent | wc -l | xargs echo)
 ifeq ($(JOYENT),1)
